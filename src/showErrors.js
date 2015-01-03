@@ -1,72 +1,74 @@
 (function() {
-  var showErrorsModule;
-
-  showErrorsModule = angular.module('ui.bootstrap.showErrors', []);
+  var showErrorsModule = angular.module('ui.bootstrap.showErrors', []);
 
   showErrorsModule.directive('showErrors', [
     '$timeout', 'showErrorsConfig', '$interpolate', function($timeout, showErrorsConfig, $interpolate) {
-      var getShowSuccess, getTrigger, linkFn;
-      getTrigger = function(options) {
-        var trigger;
-        trigger = showErrorsConfig.trigger;
-        if (options && (options.trigger != null)) {
-          trigger = options.trigger;
-        }
-        return trigger;
-      };
-      getShowSuccess = function(options) {
-        var showSuccess;
-        showSuccess = showErrorsConfig.showSuccess;
-        if (options && (options.showSuccess != null)) {
-          showSuccess = options.showSuccess;
-        }
-        return showSuccess;
-      };
-      linkFn = function(scope, el, attrs, formCtrl) {
-        var blurred, inputEl, inputName, inputNgEl, options, showSuccess, toggleClasses, trigger;
-        blurred = false;
-        options = scope.$eval(attrs.showErrors);
-        showSuccess = getShowSuccess(options);
-        trigger = getTrigger(options);
-        inputEl = el[0].querySelector('.form-control[name]');
-        inputNgEl = angular.element(inputEl);
-        inputName = $interpolate(inputNgEl.attr('name') || '')(scope);
-        if (!inputName) {
-          throw "show-errors element has no child input elements with a 'name' attribute and a 'form-control' class";
-        }
-        inputNgEl.bind(trigger, function() {
-          blurred = true;
-          return toggleClasses(formCtrl[inputName].$invalid);
-        });
-        scope.$watch(function() {
-          return formCtrl[inputName] && formCtrl[inputName].$invalid;
-        }, function(invalid) {
-          if (!blurred) {
-            return;
+          var getTrigger = function(options) {
+          var trigger;
+          trigger = showErrorsConfig.trigger;
+          if (options && (options.trigger != null)) {
+              trigger = options.trigger;
           }
-          return toggleClasses(invalid);
-        });
-        scope.$on('show-errors-check-validity', function() {
-          return toggleClasses(formCtrl[inputName].$invalid);
-        });
-        scope.$on('show-errors-reset', function() {
-          return $timeout(function() {
-            el.removeClass('has-error');
-            el.removeClass('has-success');
-            return blurred = false;
-          }, 0, false);
-        });
-        return toggleClasses = function(invalid) {
-          el.toggleClass('has-error', invalid);
-          if (showSuccess) {
-            return el.toggleClass('has-success', !invalid);
+          return trigger;
+      };
+      var getShowSuccess = function(options) {
+          var showSuccess;
+          showSuccess = showErrorsConfig.showSuccess;
+          if (options && (options.showSuccess != null)) {
+              showSuccess = options.showSuccess;
           }
-        };
+          return showSuccess;
+      };
+      var linkFn = function(scope, el, attrs, formCtrl) {
+          var toggleClasses;
+          var blurred = false;
+          var options = scope.$eval(attrs.showErrors);
+          var showSuccess = getShowSuccess(options);
+          var trigger = getTrigger(options);
+          var inputEl = el[0].querySelector('.form-control[name]');
+          var spanIcon = angular.element(el[0].querySelector('.glyphicon.form-control-feedback'));
+          var inputNgEl = angular.element(inputEl);
+          var inputName = $interpolate(inputNgEl.attr('name') || '')(scope);
+          if (!inputName) {
+              throw "show-errors element has no child input elements with a 'name' attribute and a 'form-control' class";
+          }
+          inputNgEl.bind(trigger, function() {
+              blurred = true;
+              return toggleClasses(formCtrl[inputName].$invalid);
+          });
+          scope.$watch(function() {
+              return formCtrl[inputName] && formCtrl[inputName].$invalid;
+          }, function(invalid) {
+              if (!blurred) {
+                  return null;
+              }
+              return toggleClasses(invalid);
+          });
+          scope.$on('show-errors-check-validity', function() {
+              return toggleClasses(formCtrl[inputName].$invalid);
+          });
+          scope.$on('show-errors-reset', function() {
+              return $timeout(function() {
+                  el.removeClass('has-error');
+                  el.removeClass('has-success');
+                  spanIcon.removeClass('glyphicon-remove');
+                  spanIcon.removeClass('glyphicon-ok');
+                  return blurred = false;
+              }, 0, false);
+          });
+          return toggleClasses = function(invalid) {
+              el.toggleClass('has-error', invalid);
+              spanIcon.toggleClass('glyphicon-remove', invalid);
+              if (showSuccess) {
+                  spanIcon.toggleClass('glyphicon-ok', !invalid);
+                  el.toggleClass('has-success', !invalid);
+              }
+          };
       };
       return {
         restrict: 'A',
         require: '^form',
-        compile: function(elem, attrs) {
+        compile: function(elem) {
           if (!elem.hasClass('form-group')) {
             throw "show-errors element does not have the 'form-group' class";
           }
@@ -77,9 +79,8 @@
   ]);
 
   showErrorsModule.provider('showErrorsConfig', function() {
-    var _showSuccess, _trigger;
-    _showSuccess = false;
-    _trigger = 'blur';
+    var _showSuccess = false;
+    var _trigger = 'blur';
     this.showSuccess = function(showSuccess) {
       return _showSuccess = showSuccess;
     };
